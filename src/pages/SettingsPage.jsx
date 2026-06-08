@@ -1,8 +1,10 @@
 import React from 'react';
 import { Box, Button, Card, CardContent, Chip, Typography } from '@mui/material';
+import { useNavigate } from 'react-router-dom';
 import { useUrbanPets } from '../providers/UrbanPetsProvider.jsx';
 
 const SettingsPage = () => {
+  const navigate = useNavigate();
   const { state, dispatch, actionTypes } = useUrbanPets();
 
   return (
@@ -10,6 +12,15 @@ const SettingsPage = () => {
       <Typography variant="h4" sx={{ fontWeight: 700, mb: 3 }}>
         Configuración
       </Typography>
+      <Card sx={{ borderRadius: 4, p: 3, mb: 3 }}>
+        <CardContent>
+          <Typography variant="h6">Panel Administrador</Typography>
+          <Typography sx={{ mt: 1, mb: 2 }}>Accede al panel de administración para gestionar servicios, categorías, citas y contenido.</Typography>
+          <Button variant="contained" color="primary" onClick={() => navigate('/admin')}>
+            Ir al Panel Admin
+          </Button>
+        </CardContent>
+      </Card>
       <Card sx={{ borderRadius: 4, p: 3, mb: 3 }}>
         <CardContent>
           <Typography variant="h6">Información del proyecto</Typography>
