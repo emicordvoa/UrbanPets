@@ -67,7 +67,7 @@ const AdminSidebar = () => {
       <Divider sx={{ bgcolor: 'rgba(255,255,255,0.14)' }} />
       <Box sx={{ p: 2 }}>
         <Typography variant="caption" sx={{ color: 'rgba(255,255,255,0.7)' }}>
-          Panel con roles Supabase
+          Panel con roles de usuarios
         </Typography>
       </Box>
     </Drawer>

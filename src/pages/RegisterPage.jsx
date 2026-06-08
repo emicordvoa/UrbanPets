@@ -6,8 +6,8 @@ import { useAuth } from '../providers/AuthProvider.jsx';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
-  const [values, setValues] = useState({ nombre: '', correo: '', password: '' });
+  const { register } = useAuth();
+  const [values, setValues] = useState({ nombre: '', correo: '', telefono: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
@@ -19,9 +19,9 @@ const RegisterPage = () => {
     event.preventDefault();
     setLoading(true);
     setError('');
-    const { error: signUpError } = await signUp(values);
-    if (signUpError) {
-      setError(signUpError.message || 'No se pudo crear la cuenta.');
+    const { error: registerError } = await register(values);
+    if (registerError) {
+      setError(registerError.message || 'No se pudo crear la cuenta.');
       setLoading(false);
       return;
     }
@@ -46,6 +46,7 @@ const RegisterPage = () => {
             <Stack spacing={2}>
               <TextField label="Nombre completo" value={values.nombre} onChange={handleChange('nombre')} fullWidth required />
               <TextField label="Correo" type="email" value={values.correo} onChange={handleChange('correo')} fullWidth required />
+              <TextField label="Telefono" value={values.telefono} onChange={handleChange('telefono')} fullWidth required />
               <TextField label="Contrasena" type="password" value={values.password} onChange={handleChange('password')} fullWidth required />
               <Button type="submit" variant="contained" size="large" startIcon={<PersonAddIcon />} disabled={loading}>
                 Crear cuenta

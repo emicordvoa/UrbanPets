@@ -281,24 +281,50 @@ export const eliminarPublicacion = async (id) => {
 };
 
 // ========== ESTADÍSTICAS ==========
-export const obtenerPerfiles = async () => {
+export const obtenerUsuarios = async () => {
   try {
-    const { data, error } = await supabase.from('perfiles').select('*').order('creado_en', { ascending: false });
+    const { data, error } = await supabase.from('usuarios').select('*').order('creado_en', { ascending: false });
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error obtenerPerfiles:', error);
+    console.error('Error obtenerUsuarios:', error);
     return { data: null, error };
   }
 };
 
-export const actualizarPerfil = async (id, updates) => {
+export const actualizarUsuario = async (id, updates) => {
   try {
-    const { data, error } = await supabase.from('perfiles').update(updates).eq('id', id).select('id').single();
+    const { data, error } = await supabase.from('usuarios').update(updates).eq('id', id).select('id').single();
     if (error) throw error;
     return { data, error: null };
   } catch (error) {
-    console.error('Error actualizarPerfil:', error);
+    console.error('Error actualizarUsuario:', error);
+    return { data: null, error };
+  }
+};
+
+export const crearUsuario = async (usuario) => {
+  try {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .insert([usuario])
+      .select('id')
+      .single();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error crearUsuario:', error);
+    return { data: null, error };
+  }
+};
+
+export const eliminarUsuario = async (id) => {
+  try {
+    const { error } = await supabase.from('usuarios').delete().eq('id', id);
+    if (error) throw error;
+    return { data: { eliminado: true }, error: null };
+  } catch (error) {
+    console.error('Error eliminarUsuario:', error);
     return { data: null, error };
   }
 };

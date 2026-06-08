@@ -2,125 +2,96 @@ import React, { createContext, useContext, useEffect, useMemo, useState } from '
 import { supabase } from '../lib/supabaseClient.js';
 
 const AuthContext = createContext(null);
+const USER_STORAGE_KEY = 'urbanpets_user';
 
-const normalizeRole = (rol) => rol || 'cliente';
+const publicUserFields = (usuario) => ({
+  id: usuario.id,
+  nombre: usuario.nombre,
+  correo: usuario.correo,
+  telefono: usuario.telefono || '',
+  rol: usuario.rol || 'cliente',
+  activo: usuario.activo !== false
+});
 
 export const AuthProvider = ({ children }) => {
-  const [session, setSession] = useState(null);
   const [user, setUser] = useState(null);
-  const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const loadProfile = async (authUser) => {
-    if (!authUser) {
-      setProfile(null);
-      return null;
+  useEffect(() => {
+    const savedUser = window.localStorage.getItem(USER_STORAGE_KEY);
+    if (savedUser) {
+      try {
+        setUser(JSON.parse(savedUser));
+      } catch (error) {
+        console.error('Error leyendo usuario local:', error);
+        window.localStorage.removeItem(USER_STORAGE_KEY);
+      }
     }
+    setLoading(false);
+  }, []);
 
-    const { data, error } = await supabase
-      .from('perfiles')
-      .select('*')
-      .eq('auth_user_id', authUser.id)
-      .maybeSingle();
-
-    if (error) {
-      console.error('Error cargando perfil:', error);
-      setProfile(null);
-      return null;
-    }
-
-    const normalized = data ? { ...data, rol: normalizeRole(data.rol) } : null;
-    setProfile(normalized);
+  const persistUser = (usuario) => {
+    const normalized = publicUserFields(usuario);
+    window.localStorage.setItem(USER_STORAGE_KEY, JSON.stringify(normalized));
+    setUser(normalized);
     return normalized;
   };
 
-  useEffect(() => {
-    let mounted = true;
+  const login = async ({ correo, password }) => {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .select('id, nombre, correo, telefono, rol, activo')
+      .eq('correo', correo)
+      .eq('contrasena', password)
+      .maybeSingle();
 
-    const bootstrap = async () => {
-      setLoading(true);
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-      setSession(data.session);
-      setUser(data.session?.user || null);
-      await loadProfile(data.session?.user);
-      if (mounted) setLoading(false);
-    };
-
-    bootstrap();
-
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, nextSession) => {
-      setSession(nextSession);
-      setUser(nextSession?.user || null);
-      await loadProfile(nextSession?.user);
-      setLoading(false);
-    });
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-    };
-  }, []);
-
-  const signIn = async ({ correo, password }) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: correo,
-      password
-    });
     if (error) return { data: null, error };
-    const loadedProfile = await loadProfile(data.user);
-    return { data: { ...data, profile: loadedProfile }, error: null };
+    if (!data) return { data: null, error: new Error('Credenciales invalidas') };
+    if (data.activo === false) return { data: null, error: new Error('Usuario desactivado') };
+
+    const loggedUser = persistUser(data);
+    return { data: { user: loggedUser }, error: null };
   };
 
-  const signUp = async ({ nombre, correo, password }) => {
-    const { data, error } = await supabase.auth.signUp({
-      email: correo,
-      password,
-      options: { data: { nombre, rol: 'cliente' } }
-    });
-    if (error) return { data: null, error };
-
-    if (data.user) {
-      const { error: profileError } = await supabase.from('perfiles').insert([
+  const register = async ({ nombre, correo, telefono, password }) => {
+    const { data, error } = await supabase
+      .from('usuarios')
+      .insert([
         {
-          auth_user_id: data.user.id,
           nombre,
           correo,
+          telefono,
+          contrasena: password,
           rol: 'cliente',
           activo: true
         }
-      ]);
-      if (profileError) return { data: null, error: profileError };
-      await loadProfile(data.user);
-    }
+      ])
+      .select('id, nombre, correo, telefono, rol, activo')
+      .single();
 
-    return { data, error: null };
+    if (error) return { data: null, error };
+    const registeredUser = persistUser(data);
+    return { data: { user: registeredUser }, error: null };
   };
 
-  const signOut = async () => {
-    const { error } = await supabase.auth.signOut();
-    if (!error) {
-      setSession(null);
-      setUser(null);
-      setProfile(null);
-    }
-    return { error };
+  const logout = () => {
+    window.localStorage.removeItem(USER_STORAGE_KEY);
+    setUser(null);
+    return { error: null };
   };
 
   const value = useMemo(
     () => ({
       loading,
-      session,
       user,
-      profile,
-      role: profile?.rol || null,
-      isAuthenticated: Boolean(session),
-      signIn,
-      signUp,
-      signOut,
-      refreshProfile: () => loadProfile(user)
+      profile: user,
+      role: user?.rol || null,
+      isAuthenticated: Boolean(user),
+      login,
+      register,
+      logout
     }),
-    [loading, session, user, profile]
+    [loading, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

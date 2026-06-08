@@ -18,7 +18,7 @@ const AccessDenied = ({ roles }) => (
 );
 
 const ProtectedRoute = ({ children, roles = [] }) => {
-  const { loading, isAuthenticated, profile } = useAuth();
+  const { loading, isAuthenticated, user } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -33,7 +33,15 @@ const ProtectedRoute = ({ children, roles = [] }) => {
     return <Navigate to="/login" replace state={{ from: location.pathname }} />;
   }
 
-  if (roles.length > 0 && !roles.includes(profile?.rol)) {
+  if (!user || user.activo === false) {
+    return <AccessDenied roles={roles.length ? roles : ['usuario activo']} />;
+  }
+
+  if (user.rol === 'administrador') {
+    return children;
+  }
+
+  if (roles.length > 0 && !roles.includes(user.rol)) {
     return <AccessDenied roles={roles} />;
   }
 

@@ -7,8 +7,9 @@ import PetsIcon from '@mui/icons-material/Pets';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import SettingsIcon from '@mui/icons-material/Settings';
 import LoginIcon from '@mui/icons-material/Login';
+import LogoutIcon from '@mui/icons-material/Logout';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import { Link as RouterLink } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import ThemeModeToggle from './ThemeModeToggle.jsx';
 import { useUrbanPets } from '../../providers/UrbanPetsProvider.jsx';
 import { useAuth } from '../../providers/AuthProvider.jsx';
@@ -22,7 +23,8 @@ const navItems = [
 
 const AppTopBar = () => {
   const { state } = useUrbanPets();
-  const { profile } = useAuth();
+  const { profile, logout } = useAuth();
+  const navigate = useNavigate();
   const compact = useMediaQuery((theme) => theme.breakpoints.down('md'));
   const cartCount = state.cart.reduce((total, item) => total + item.quantity, 0);
   const panelPath =
@@ -84,6 +86,18 @@ const AppTopBar = () => {
           <Button startIcon={<LoginIcon />} component={RouterLink} to={panelPath} variant="outlined" sx={{ display: { xs: 'none', sm: 'inline-flex' } }}>
             {profile ? 'Mi panel' : 'Iniciar sesion'}
           </Button>
+          {profile && (
+            <IconButton
+              color="primary"
+              aria-label="Cerrar sesion"
+              onClick={() => {
+                logout();
+                navigate('/login');
+              }}
+            >
+              <LogoutIcon />
+            </IconButton>
+          )}
           <ThemeModeToggle />
         </Box>
       </Toolbar>

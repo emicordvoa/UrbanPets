@@ -20,7 +20,7 @@ La interfaz fue refactorizada hacia una estetica premium con tonos lilas, morado
 - Carrito invitado persistente con `localStorage`.
 - Checkout como invitado o cliente logueado.
 - Insercion de clientes, mascotas, pedidos y detalle de pedido en Supabase.
-- Supabase Auth con roles: `administrador`, `trabajador`, `cliente`.
+- Login academico simulado con tabla publica `usuarios` y roles: `administrador`, `trabajador`, `cliente`.
 - Panel administrador: dashboard, servicios, categorias, citas, publicaciones, usuarios, clientes y mascotas.
 - Panel trabajador: citas, clientes y mascotas.
 - Zona cliente: perfil, mascotas y reservas.
@@ -39,7 +39,7 @@ No uses `service_role` en frontend.
 ## SQL
 
 1. Ejecuta la estructura base del proyecto si tu base aun no tiene las tablas principales.
-2. Ejecuta `SUPABASE_SETUP_V2.sql` para agregar `perfiles`, roles y politicas RLS demo.
+2. Ejecuta `SUPABASE_USUARIOS_SIMPLE.sql` para recrear `usuarios`, roles, politicas RLS demo y usuarios de prueba.
 
 Tablas usadas:
 
@@ -50,27 +50,21 @@ Tablas usadas:
 - `pedidos`
 - `pedido_detalle`
 - `publicaciones`
-- `perfiles`
+- `usuarios`
 
-Las politicas incluidas en `SUPABASE_SETUP_V2.sql` son abiertas para demo academica. En produccion deben endurecerse con reglas por `auth.uid()` y rol.
+Las politicas incluidas en `SUPABASE_USUARIOS_SIMPLE.sql` son abiertas para demo academica. En produccion se debe usar Supabase Auth, contrasenas con hash y politicas seguras por usuario/rol.
 
-## Usuarios demo
+## Login academico y usuarios demo
 
-Supabase Auth no permite crear usuarios completos solo con SQL desde el editor normal. Crea manualmente estos usuarios en Supabase Auth:
+Este proyecto usa un login simulado para fines academicos. El login consulta directamente la tabla publica `usuarios` y guarda la sesion en `localStorage` con la clave `urbanpets_user`.
 
-- Administrador: `administrador@urbanpets.demo` / `UrbanPets123!`
-- Trabajador: `trabajador@urbanpets.demo` / `UrbanPets123!`
-- Cliente: `cliente@urbanpets.demo` / `UrbanPets123!`
+Usuarios de prueba incluidos en `SUPABASE_USUARIOS_SIMPLE.sql`:
 
-Luego copia cada `auth.users.id` y crea los perfiles:
+- Administrador: `admin@urbanpets.com` / `Admin123456`
+- Trabajador: `trabajador@urbanpets.com` / `Trabajador123456`
+- Cliente: `cliente@urbanpets.com` / `Cliente123456`
 
-```sql
-insert into perfiles (auth_user_id, nombre, correo, rol, activo)
-values
-('UUID_AUTH_ADMIN', 'Admin UrbanPets', 'administrador@urbanpets.demo', 'administrador', true),
-('UUID_AUTH_TRABAJADOR', 'Trabajador UrbanPets', 'trabajador@urbanpets.demo', 'trabajador', true),
-('UUID_AUTH_CLIENTE', 'Cliente Demo', 'cliente@urbanpets.demo', 'cliente', true);
-```
+En produccion no se debe guardar `contrasena` en texto plano ni autenticar desde una tabla publica; se recomienda volver a Supabase Auth.
 
 ## Rutas
 

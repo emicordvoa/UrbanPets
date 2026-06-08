@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Box, Button, Card, CardContent, Divider, Stack, TextField, Typography } from '@mui/material';
 import LoginIcon from '@mui/icons-material/Login';
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../providers/AuthProvider.jsx';
 
 const roleHome = {
@@ -12,8 +12,7 @@ const roleHome = {
 
 const LoginPage = () => {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { signIn } = useAuth();
+  const { login } = useAuth();
   const [values, setValues] = useState({ correo: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -26,14 +25,14 @@ const LoginPage = () => {
     event.preventDefault();
     setLoading(true);
     setError('');
-    const { data, error: signInError } = await signIn(values);
-    if (signInError) {
-      setError(signInError.message || 'No se pudo iniciar sesion.');
+    const { data, error: loginError } = await login(values);
+    if (loginError) {
+      setError(loginError.message === 'Credenciales invalidas' ? 'Credenciales inválidas' : loginError.message || 'No se pudo iniciar sesion.');
       setLoading(false);
       return;
     }
-    const profile = data?.profile;
-    navigate(location.state?.from || roleHome[profile?.rol] || '/cliente', { replace: true });
+    const loggedUser = data?.user;
+    navigate(roleHome[loggedUser?.rol] || '/cliente', { replace: true });
   };
 
   return (
