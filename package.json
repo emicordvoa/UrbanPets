@@ -1,0 +1,36 @@
+{
+  "name": "urbanpets",
+  "private": true,
+  "homepage": "https://TU-USUARIO.github.io/urbanpets",
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext .js,.jsx",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d dist"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.12.0",
+    "@emotion/styled": "^11.12.0",
+    "@mui/icons-material": "^5.14.4",
+    "@mui/material": "^5.14.5",
+    "@supabase/supabase-js": "^2.24.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-router-dom": "^6.16.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.0.0",
+    "eslint-plugin-react": "^7.37.5",
+    "gh-pages": "^5.0.0",
+    "prettier": "^3.8.3",
+    "vite": "^5.4.0"
+  }
+}
