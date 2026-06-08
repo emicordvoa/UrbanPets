@@ -7,7 +7,7 @@ const AdminLayout = ({ children }) => (
     <AdminSidebar />
     <Box sx={{ flex: 1, display: 'flex', flexDirection: 'column' }}>
       <Alert severity="warning" sx={{ m: 2, borderRadius: 2 }}>
-        Modo administrador de prueba, sin autenticación real.
+        Acceso protegido por Supabase Auth y roles. Revisa las politicas RLS antes de produccion.
       </Alert>
       <Container maxWidth="lg" sx={{ py: 4 }}>
         {children}

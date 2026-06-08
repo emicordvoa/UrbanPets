@@ -281,6 +281,56 @@ export const eliminarPublicacion = async (id) => {
 };
 
 // ========== ESTADÍSTICAS ==========
+export const obtenerPerfiles = async () => {
+  try {
+    const { data, error } = await supabase.from('perfiles').select('*').order('creado_en', { ascending: false });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error obtenerPerfiles:', error);
+    return { data: null, error };
+  }
+};
+
+export const actualizarPerfil = async (id, updates) => {
+  try {
+    const { data, error } = await supabase.from('perfiles').update(updates).eq('id', id).select('id').single();
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error actualizarPerfil:', error);
+    return { data: null, error };
+  }
+};
+
+export const obtenerClientes = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('clientes')
+      .select('*, mascotas(id, nombre, raza), pedidos(id, estado, total, creado_en)')
+      .order('creado_en', { ascending: false });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error obtenerClientes:', error);
+    return { data: null, error };
+  }
+};
+
+export const obtenerMascotas = async () => {
+  try {
+    const { data, error } = await supabase
+      .from('mascotas')
+      .select('*, clientes(nombre, correo, telefono)')
+      .order('creado_en', { ascending: false });
+    if (error) throw error;
+    return { data, error: null };
+  } catch (error) {
+    console.error('Error obtenerMascotas:', error);
+    return { data: null, error };
+  }
+};
+
 export const obtenerEstadisticasAdmin = async () => {
   try {
     const [

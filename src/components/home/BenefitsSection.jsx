@@ -1,22 +1,30 @@
 import React from 'react';
-import { Grid, Paper, Typography } from '@mui/material';
+import { Avatar, Grid, Paper, Stack, Typography } from '@mui/material';
+import FavoriteIcon from '@mui/icons-material/Favorite';
+import EventAvailableIcon from '@mui/icons-material/EventAvailable';
+import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import NotificationsActiveIcon from '@mui/icons-material/NotificationsActive';
 
 const benefits = [
-  { title: 'Atención personalizada', subtitle: 'Planes hechos a la medida del tamaño, raza y carácter de tu mascota.' },
-  { title: 'Agenda 24/7', subtitle: 'Reserva cuando quieras y recibe confirmación rápida.' },
-  { title: 'Cuidado profesional', subtitle: 'Equipo especializado en bienestar animal y estética canina.' },
-  { title: 'Recordatorios de citas', subtitle: 'Te ayudamos a recordar la fecha y hora de tu servicio.' }
+  { title: 'Atencion personalizada', subtitle: 'Planes segun tamano, raza, energia y necesidades de tu mascota.', icon: <FavoriteIcon /> },
+  { title: 'Agenda facil y rapida', subtitle: 'Elige servicios, fecha y hora desde una experiencia clara.', icon: <EventAvailableIcon /> },
+  { title: 'Cuidado profesional', subtitle: 'Equipo orientado a bienestar, estetica y trato responsable.', icon: <WorkspacePremiumIcon /> },
+  { title: 'Seguimiento cercano', subtitle: 'Estados de cita, historial y recordatorios listos para crecer.', icon: <NotificationsActiveIcon /> }
 ];
 
 const BenefitsSection = () => (
   <section>
-    <Typography variant="h4" gutterBottom sx={{ fontWeight: 700, mb: 3 }}>
-      Beneficios para tu mascota
-    </Typography>
+    <Stack spacing={1} sx={{ mb: 3 }}>
+      <Typography variant="overline" color="secondary.main">
+        Experiencia premium
+      </Typography>
+      <Typography variant="h3">Bienestar con orden y carino</Typography>
+    </Stack>
     <Grid container spacing={3}>
       {benefits.map((item) => (
-        <Grid item xs={12} sm={6} key={item.title}>
-          <Paper elevation={1} sx={{ p: 3, borderRadius: 4, minHeight: 160, transition: 'transform .2s', '&:hover': { transform: 'translateY(-4px)' } }}>
+        <Grid item xs={12} sm={6} md={3} key={item.title}>
+          <Paper elevation={1} sx={{ p: 3, minHeight: 220, borderRadius: 3, transition: 'transform .2s, box-shadow .2s', '&:hover': { transform: 'translateY(-6px)', boxShadow: 3 } }}>
+            <Avatar sx={{ bgcolor: 'primary.light', color: '#fff', mb: 2 }}>{item.icon}</Avatar>
             <Typography variant="h6" gutterBottom>
               {item.title}
             </Typography>

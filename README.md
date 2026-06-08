@@ -1,148 +1,151 @@
 # UrbanPets
 
-UrbanPets es una plataforma MVP para contratación de servicios de peluquería canina, hotel, guardería, spa y cuidado de mascotas en Cochabamba.
+UrbanPets es una plataforma web para servicios de mascotas: peluqueria, bano, spa, hotel, guarderia y extras. El proyecto usa React, Vite, Material UI, React Router, Supabase, localStorage y despliegue en GitHub Pages.
 
-## Objetivo académico
+## Identidad visual
 
-Crear una aplicación web moderna con React, Vite, Material UI, Supabase y persistencia local para practicar arquitectura de frontend y despliegue en GitHub Pages.
+La interfaz fue refactorizada hacia una estetica premium con tonos lilas, morados suaves, beige y verde oliva:
 
-## Tecnologías usadas
-
-- React
-- Vite
-- JavaScript/JSX
-- Material UI
-- React Router DOM
-- Supabase
-- localStorage
-- GitHub Pages
+- Delft Blue: `#41386B`
+- Amethyst: `#7A70BA`
+- French Gray: `#B1B4C8`
+- Beige: `#EBEED5`
+- Olivine: `#B0C49C`
+- Fondo oscuro: `#231942`
 
 ## Funcionalidades
 
-- Listado de servicios desde Supabase
-- Filtros por categoría
-- Búsqueda en tiempo real
-- Carrito de servicios
-- Checkout con datos de cliente y mascota
-- Inserción de pedidos en Supabase
-- Modo claro/oscuro
-- Formulario de contacto
-
-## Estructura del proyecto
-
-- `src/app` - Rutas y configuración de la app
-- `src/providers` - Context y proveedores globales
-- `src/components` - Componentes UI reutilizables
-- `src/pages` - Páginas principales
-- `src/utils` - Utilidades compartidas
-- `src/lib` - Cliente de Supabase
-- `src/theme` - Temas de Material UI
+- Landing page moderna con hero visual, beneficios, servicios destacados, testimonios y CTA.
+- Catalogo de servicios con busqueda, filtros, cards visuales y carrito.
+- Carrito invitado persistente con `localStorage`.
+- Checkout como invitado o cliente logueado.
+- Insercion de clientes, mascotas, pedidos y detalle de pedido en Supabase.
+- Supabase Auth con roles: `administrador`, `trabajador`, `cliente`.
+- Panel administrador: dashboard, servicios, categorias, citas, publicaciones, usuarios, clientes y mascotas.
+- Panel trabajador: citas, clientes y mascotas.
+- Zona cliente: perfil, mascotas y reservas.
 
 ## Variables de entorno
 
-Copiar `.env.example` a `.env.local` y pegar tus credenciales de Supabase:
+Copiar `.env.example` a `.env.local` y configurar:
 
 ```env
 VITE_SUPABASE_URL="https://tu-proyecto.supabase.co"
 VITE_SUPABASE_ANON_KEY="tu-anon-key"
 ```
 
-## SQL necesario para Supabase
+No uses `service_role` en frontend.
+
+## SQL
+
+1. Ejecuta la estructura base del proyecto si tu base aun no tiene las tablas principales.
+2. Ejecuta `SUPABASE_SETUP_V2.sql` para agregar `perfiles`, roles y politicas RLS demo.
+
+Tablas usadas:
+
+- `categorias`
+- `servicios`
+- `clientes`
+- `mascotas`
+- `pedidos`
+- `pedido_detalle`
+- `publicaciones`
+- `perfiles`
+
+Las politicas incluidas en `SUPABASE_SETUP_V2.sql` son abiertas para demo academica. En produccion deben endurecerse con reglas por `auth.uid()` y rol.
+
+## Usuarios demo
+
+Supabase Auth no permite crear usuarios completos solo con SQL desde el editor normal. Crea manualmente estos usuarios en Supabase Auth:
+
+- Administrador: `administrador@urbanpets.demo` / `UrbanPets123!`
+- Trabajador: `trabajador@urbanpets.demo` / `UrbanPets123!`
+- Cliente: `cliente@urbanpets.demo` / `UrbanPets123!`
+
+Luego copia cada `auth.users.id` y crea los perfiles:
 
 ```sql
-create table categorias (
-  id uuid primary key default uuid_generate_v4(),
-  nombre text not null,
-  descripcion text,
-  creado_en timestamp with time zone default now()
-);
-
-create table servicios (
-  id uuid primary key default uuid_generate_v4(),
-  categoria_id uuid references categorias(id),
-  titulo text not null,
-  descripcion text,
-  precio numeric not null,
-  duracion_minutos integer,
-  imagen text,
-  activo boolean default true,
-  creado_en timestamp with time zone default now()
-);
-
-create table clientes (
-  id uuid primary key default uuid_generate_v4(),
-  nombre text not null,
-  correo text not null,
-  telefono text not null,
-  creado_en timestamp with time zone default now()
-);
-
-create table mascotas (
-  id uuid primary key default uuid_generate_v4(),
-  cliente_id uuid references clientes(id),
-  nombre text not null,
-  raza text,
-  edad text,
-  peso text,
-  notas text,
-  creado_en timestamp with time zone default now()
-);
-
-create table pedidos (
-  id uuid primary key default uuid_generate_v4(),
-  cliente_id uuid references clientes(id),
-  mascota_id uuid references mascotas(id),
-  fecha_preferida date,
-  hora_preferida text,
-  mensaje text,
-  total numeric,
-  estado text default 'Pendiente',
-  creado_en timestamp with time zone default now()
-);
-
-create table pedido_detalle (
-  id uuid primary key default uuid_generate_v4(),
-  pedido_id uuid references pedidos(id),
-  servicio_id uuid references servicios(id),
-  cantidad integer,
-  precio_unitario numeric,
-  subtotal numeric
-);
+insert into perfiles (auth_user_id, nombre, correo, rol, activo)
+values
+('UUID_AUTH_ADMIN', 'Admin UrbanPets', 'administrador@urbanpets.demo', 'administrador', true),
+('UUID_AUTH_TRABAJADOR', 'Trabajador UrbanPets', 'trabajador@urbanpets.demo', 'trabajador', true),
+('UUID_AUTH_CLIENTE', 'Cliente Demo', 'cliente@urbanpets.demo', 'cliente', true);
 ```
 
-## Ejecutar localmente
+## Rutas
+
+Publicas:
+
+- `/#/`
+- `/#/servicios`
+- `/#/carrito`
+- `/#/contacto`
+- `/#/login`
+- `/#/registro`
+
+Admin:
+
+- `/#/admin`
+- `/#/admin/servicios`
+- `/#/admin/categorias`
+- `/#/admin/citas`
+- `/#/admin/publicaciones`
+- `/#/admin/usuarios`
+- `/#/admin/clientes`
+- `/#/admin/mascotas`
+
+Trabajador:
+
+- `/#/trabajador`
+- `/#/trabajador/citas`
+- `/#/trabajador/clientes`
+- `/#/trabajador/mascotas`
+
+Cliente:
+
+- `/#/cliente`
+- `/#/cliente/perfil`
+- `/#/cliente/mascotas`
+- `/#/cliente/reservas`
+
+## Ejecutar local
+
+En Windows usa `npm.cmd`:
 
 ```bash
-npm install
-npm run dev
+npm.cmd install
+npm.cmd run dev
 ```
 
-## Compilar
+## Validar
 
 ```bash
-npm run build
+npm.cmd run lint
+npm.cmd run build
 ```
 
-## Desplegar en GitHub Pages
+## Deploy
+
+No se despliega automaticamente desde Codex. Cuando este listo:
 
 ```bash
-npm run deploy
+npm.cmd run deploy
+```
+
+`vite.config.js` usa:
+
+```js
+base: '/UrbanPets/'
+```
+
+`package.json` usa:
+
+```json
+"homepage": "https://emicordvoa.github.io/UrbanPets"
 ```
 
 ## Limitaciones
 
-- No tiene login real.
-- No tiene pagos reales.
-- No tiene panel administrativo completo.
-- No envía WhatsApp automático.
-- No usa backend propio.
-
-## Próximos pasos
-
-- Agregar autenticación.
-- Agregar panel admin.
-- Agregar estados de citas.
-- Agregar recordatorios por email/WhatsApp.
-- Agregar reportes de pedidos.
-  
-# UrbanPets 
+- No hay pagos reales.
+- El panel cliente deja listas algunas vistas para conectar historial filtrado por usuario autenticado.
+- Las politicas RLS son de demo academica y deben ajustarse antes de produccion.

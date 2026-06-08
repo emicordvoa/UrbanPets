@@ -1,62 +1,59 @@
 import React, { useEffect, useState } from 'react';
 import {
+  Alert,
   Box,
   Button,
+  Chip,
   Dialog,
   DialogActions,
   DialogContent,
-  DialogContentText,
   DialogTitle,
   Grid,
+  Stack,
   TextField,
-  Typography,
-  Alert
+  Typography
 } from '@mui/material';
 import { useUrbanPets } from '../../providers/UrbanPetsProvider.jsx';
+import { useAuth } from '../../providers/AuthProvider.jsx';
 import { calculateCartTotal } from '../../utils/cart.js';
 import { validateCustomerForm } from '../../utils/validations.js';
 import { formatCurrency } from '../../utils/currency.js';
 import { supabase } from '../../lib/supabaseClient.js';
 
+const emptyValues = {
+  nombre: '',
+  correo: '',
+  telefono: '',
+  nombreMascota: '',
+  raza: '',
+  edad: '',
+  peso: '',
+  notas: '',
+  fechaPreferida: '',
+  horaPreferida: '',
+  mensaje: ''
+};
+
 const CheckoutDialog = ({ open, onClose, onSuccess }) => {
   const { state, dispatch, actionTypes } = useUrbanPets();
-  const [values, setValues] = useState({
-    nombre: '',
-    correo: '',
-    telefono: '',
-    nombreMascota: '',
-    raza: '',
-    edad: '',
-    peso: '',
-    notas: '',
-    fechaPreferida: '',
-    horaPreferida: '',
-    mensaje: ''
-  });
+  const { profile, isAuthenticated } = useAuth();
+  const [values, setValues] = useState(emptyValues);
   const [errors, setErrors] = useState({});
   const [submissionError, setSubmissionError] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    if (!open) {
+    if (open) {
       setValues({
-        nombre: '',
-        correo: '',
-        telefono: '',
-        nombreMascota: '',
-        raza: '',
-        edad: '',
-        peso: '',
-        notas: '',
-        fechaPreferida: '',
-        horaPreferida: '',
-        mensaje: ''
+        ...emptyValues,
+        nombre: profile?.nombre || '',
+        correo: profile?.correo || ''
       });
       setErrors({});
       setSubmissionError('');
       setSubmitting(false);
     }
-  }, [open]);
+  }, [open, profile]);
 
   const handleChange = (key) => (event) => {
     setValues((prev) => ({ ...prev, [key]: event.target.value }));
@@ -81,22 +78,20 @@ const CheckoutDialog = ({ open, onClose, onSuccess }) => {
       if (!state.supabaseAvailable) {
         throw new Error('Supabase no disponible');
       }
+
       const { data: clienteData, error: clienteError } = await supabase
         .from('clientes')
         .insert([{ nombre: values.nombre, correo: values.correo, telefono: values.telefono }])
         .select('id')
         .single();
 
-      if (clienteError || !clienteData) {
-        throw clienteError || new Error('Error creando cliente');
-      }
+      if (clienteError || !clienteData) throw clienteError || new Error('Error creando cliente');
 
-      const clienteId = clienteData.id;
       const { data: mascotaData, error: mascotaError } = await supabase
         .from('mascotas')
         .insert([
           {
-            cliente_id: clienteId,
+            cliente_id: clienteData.id,
             nombre: values.nombreMascota,
             raza: values.raza,
             edad: values.edad,
@@ -107,34 +102,28 @@ const CheckoutDialog = ({ open, onClose, onSuccess }) => {
         .select('id')
         .single();
 
-      if (mascotaError || !mascotaData) {
-        throw mascotaError || new Error('Error creando mascota');
-      }
-      const mascotaId = mascotaData.id;
+      if (mascotaError || !mascotaData) throw mascotaError || new Error('Error creando mascota');
 
       const { data: pedidoData, error: pedidoError } = await supabase
         .from('pedidos')
         .insert([
           {
-            cliente_id: clienteId,
-            mascota_id: mascotaId,
+            cliente_id: clienteData.id,
+            mascota_id: mascotaData.id,
             fecha_preferida: values.fechaPreferida,
             hora_preferida: values.horaPreferida,
             mensaje: values.mensaje,
             total,
-            estado: 'Pendiente'
+            estado: 'pendiente'
           }
         ])
         .select('id')
         .single();
 
-      if (pedidoError || !pedidoData) {
-        throw pedidoError || new Error('Error creando pedido');
-      }
-      const pedidoId = pedidoData.id;
+      if (pedidoError || !pedidoData) throw pedidoError || new Error('Error creando pedido');
 
       const detalle = state.cart.map((item) => ({
-        pedido_id: pedidoId,
+        pedido_id: pedidoData.id,
         servicio_id: item.id,
         cantidad: item.quantity,
         precio_unitario: item.precio,
@@ -142,9 +131,7 @@ const CheckoutDialog = ({ open, onClose, onSuccess }) => {
       }));
 
       const { error: detalleError } = await supabase.from('pedido_detalle').insert(detalle);
-      if (detalleError) {
-        throw detalleError;
-      }
+      if (detalleError) throw detalleError;
 
       dispatch({ type: actionTypes.clearCart });
       dispatch({ type: actionTypes.setLastOrder, payload: { total, fecha: new Date().toISOString(), cliente: values.nombre } });
@@ -152,7 +139,7 @@ const CheckoutDialog = ({ open, onClose, onSuccess }) => {
       onClose();
     } catch (error) {
       console.error(error);
-      setSubmissionError('No se pudo registrar el pedido. Verifica tu conexión y vuelve a intentar.');
+      setSubmissionError('No se pudo registrar el pedido. Verifica tu conexion y vuelve a intentar.');
     } finally {
       setSubmitting(false);
     }
@@ -160,61 +147,33 @@ const CheckoutDialog = ({ open, onClose, onSuccess }) => {
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
-      <DialogTitle>Confirmar servicio</DialogTitle>
+      <DialogTitle sx={{ pb: 1 }}>Confirmar reserva</DialogTitle>
       <DialogContent>
-        <DialogContentText>
-          Completa los datos del cliente, la mascota y la cita para agendar tu servicio.
-        </DialogContentText>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }}>
+          <Chip color={isAuthenticated ? 'success' : 'secondary'} label={isAuthenticated ? 'Modo cliente logueado' : 'Modo invitado'} />
+          <Chip variant="outlined" label="Carrito guardado en localStorage" />
+        </Stack>
+        <Typography color="text.secondary">
+          Completa cliente, mascota y horario. Puedes reservar como invitado o iniciar sesion para reutilizar tus datos.
+        </Typography>
         {submissionError && <Alert severity="error" sx={{ mt: 2 }}>{submissionError}</Alert>}
         <Box component="form" sx={{ mt: 3 }}>
-          <Typography variant="subtitle1" gutterBottom>
-            Datos del cliente
-          </Typography>
+          <Typography variant="h6" gutterBottom>Datos del cliente</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Nombre"
-                value={values.nombre}
-                onChange={handleChange('nombre')}
-                fullWidth
-                error={!!errors.nombre}
-                helperText={errors.nombre}
-              />
+              <TextField label="Nombre" value={values.nombre} onChange={handleChange('nombre')} fullWidth error={!!errors.nombre} helperText={errors.nombre} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Correo"
-                value={values.correo}
-                onChange={handleChange('correo')}
-                fullWidth
-                error={!!errors.correo}
-                helperText={errors.correo}
-              />
+              <TextField label="Correo" value={values.correo} onChange={handleChange('correo')} fullWidth error={!!errors.correo} helperText={errors.correo} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Teléfono"
-                value={values.telefono}
-                onChange={handleChange('telefono')}
-                fullWidth
-                error={!!errors.telefono}
-                helperText={errors.telefono}
-              />
+              <TextField label="Telefono" value={values.telefono} onChange={handleChange('telefono')} fullWidth error={!!errors.telefono} helperText={errors.telefono} />
             </Grid>
           </Grid>
-          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
-            Datos de la mascota
-          </Typography>
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Datos de la mascota</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Nombre de la mascota"
-                value={values.nombreMascota}
-                onChange={handleChange('nombreMascota')}
-                fullWidth
-                error={!!errors.nombreMascota}
-                helperText={errors.nombreMascota}
-              />
+              <TextField label="Nombre de la mascota" value={values.nombreMascota} onChange={handleChange('nombreMascota')} fullWidth error={!!errors.nombreMascota} helperText={errors.nombreMascota} />
             </Grid>
             <Grid item xs={12} sm={6}>
               <TextField label="Raza" value={values.raza} onChange={handleChange('raza')} fullWidth />
@@ -226,61 +185,27 @@ const CheckoutDialog = ({ open, onClose, onSuccess }) => {
               <TextField label="Peso" value={values.peso} onChange={handleChange('peso')} fullWidth />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                label="Notas especiales"
-                value={values.notas}
-                onChange={handleChange('notas')}
-                fullWidth
-                multiline
-                minRows={2}
-              />
+              <TextField label="Notas especiales" value={values.notas} onChange={handleChange('notas')} fullWidth multiline minRows={2} />
             </Grid>
           </Grid>
-          <Typography variant="subtitle1" gutterBottom sx={{ mt: 3 }}>
-            Datos de la cita
-          </Typography>
+          <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>Datos de la cita</Typography>
           <Grid container spacing={2}>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Fecha preferida"
-                type="date"
-                value={values.fechaPreferida}
-                onChange={handleChange('fechaPreferida')}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.fechaPreferida}
-                helperText={errors.fechaPreferida}
-              />
+              <TextField label="Fecha preferida" type="date" value={values.fechaPreferida} onChange={handleChange('fechaPreferida')} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.fechaPreferida} helperText={errors.fechaPreferida} />
             </Grid>
             <Grid item xs={12} sm={6}>
-              <TextField
-                label="Hora preferida"
-                type="time"
-                value={values.horaPreferida}
-                onChange={handleChange('horaPreferida')}
-                fullWidth
-                InputLabelProps={{ shrink: true }}
-                error={!!errors.horaPreferida}
-                helperText={errors.horaPreferida}
-              />
+              <TextField label="Hora preferida" type="time" value={values.horaPreferida} onChange={handleChange('horaPreferida')} fullWidth InputLabelProps={{ shrink: true }} error={!!errors.horaPreferida} helperText={errors.horaPreferida} />
             </Grid>
             <Grid item xs={12}>
-              <TextField
-                label="Mensaje opcional"
-                value={values.mensaje}
-                onChange={handleChange('mensaje')}
-                fullWidth
-                multiline
-                minRows={3}
-              />
+              <TextField label="Mensaje opcional" value={values.mensaje} onChange={handleChange('mensaje')} fullWidth multiline minRows={3} />
             </Grid>
           </Grid>
-          <Typography variant="subtitle2" sx={{ mt: 3 }}>
+          <Typography variant="h5" sx={{ mt: 3, color: 'primary.main' }}>
             Total estimado: {formatCurrency(calculateCartTotal(state.cart))}
           </Typography>
         </Box>
       </DialogContent>
-      <DialogActions>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
         <Button onClick={onClose}>Cancelar</Button>
         <Button variant="contained" onClick={handleSubmit} disabled={submitting}>
           Confirmar pedido
